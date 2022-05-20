@@ -3,15 +3,20 @@ import time
 
 import cv2
 import mediapipe as mp
-import serial
 
+from arduino import Arduino
+from manipulator import Claw, HorizontalLever, VerticalLever
 import config as cfg
 import service
 from finger import Finger
 
 
-uart = serial.Serial(cfg.COM_PORT_6, cfg.BOD_SPEED)
+claw = Claw()
+horizontal_lever = HorizontalLever()
+vertical_lever = VerticalLever()
+arduino = Arduino(cfg.COM_PORT_6, cfg.BOD_SPEED)
 camera = cv2.VideoCapture(cfg.BUILTIN_CAMERA)
+
 fingers = [Finger() for _ in range(cfg.FINGER_POINTS_COUNT)]
 
 mp_hands = mp.solutions.hands
@@ -39,12 +44,21 @@ while cv2.waitKey(cfg.TIME_DELAY) != ord('q'):
                     cv2.circle(img, (fingers[id].x, fingers[id].y), cfg.CIRCLE_RADIUS, cfg.PINK_COLOR, cv2.FILLED)
                     distance = service.get_distance(fingers[cfg.FOREFINGER_ID], fingers[cfg.THUMB_ID])
                     logging.info(distance)
-                    if distance <= 30:
-                        rotate_data = service.get_rotate_angle_for_axis(fingers[id], cfg.WIDTH)
-                        service.send_to_arduino(uart, rotate_data)
+
+                    if distance < 67:
+                        # получение данных по оси Y
+                        vertical_data = vertical_lever.get_angle(fingers[cfg.THUMB_ID], cfg.HEIGHT)
+                        arduino.send(vertical_lever.get_data(vertical_data))
+
+                        # получение данных по оси X
+                        horizontal_data = horizontal_lever.get_angle(fingers[cfg.THUMB_ID], cfg.WIDTH)
+                        arduino.send(horizontal_lever.get_data(horizontal_data))
+
+                        # отводим клешню в нулевое положение
+                        arduino.send(claw.get_data(0))
+
                     else:
-                        # angle = service.get_claw_angle(distance)
-                        # service.send_to_arduino(uart, angle)
                         logging.info('КЛЕШНЯ АКТИВИРОВАНА')
+                        arduino.send(claw.get_data(distance))
 
     cv2.imshow("Hand recognizer", img)
