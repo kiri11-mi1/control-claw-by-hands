@@ -1,5 +1,4 @@
 import logging
-import time
 
 import cv2
 import mediapipe as mp
@@ -45,7 +44,7 @@ while cv2.waitKey(cfg.TIME_DELAY) != ord('q'):
                     distance = service.get_distance(fingers[cfg.FOREFINGER_ID], fingers[cfg.THUMB_ID])
                     logging.info(distance)
 
-                    if distance < 67:
+                    if distance < cfg.MAX_DISTANCE_BETWEEN_FINGERS:
                         # получение данных по оси Y
                         vertical_data = vertical_lever.get_angle(fingers[cfg.THUMB_ID], cfg.HEIGHT)
                         arduino.send(vertical_lever.get_data(vertical_data))
