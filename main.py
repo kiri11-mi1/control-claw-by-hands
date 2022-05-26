@@ -22,8 +22,6 @@ mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=1)
 mp_draw = mp.solutions.drawing_utils
 
-old_finger = Finger()
-flag = True
 
 while cv2.waitKey(cfg.TIME_DELAY) != ord('q'):
     good, img = camera.read()
