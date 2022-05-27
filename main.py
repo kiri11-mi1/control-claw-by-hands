@@ -13,9 +13,14 @@ from finger import Finger
 claw = Claw()
 horizontal_lever = HorizontalLever()
 vertical_lever = VerticalLever()
+
+# подключаем Arduino
 arduino = Arduino(cfg.COM_PORT_6, cfg.BOD_SPEED)
+
+# подключаем веб камеру
 camera = cv2.VideoCapture(cfg.BUILTIN_CAMERA)
 
+# создём массив пальцев
 fingers = [Finger() for _ in range(cfg.FINGER_POINTS_COUNT)]
 
 mp_hands = mp.solutions.hands
@@ -24,6 +29,7 @@ mp_draw = mp.solutions.drawing_utils
 
 
 while cv2.waitKey(cfg.TIME_DELAY) != ord('q'):
+    # получаем изобраджение с камеры в отдельном окне
     good, img = camera.read()
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = hands.process(imgRGB)
@@ -37,7 +43,8 @@ while cv2.waitKey(cfg.TIME_DELAY) != ord('q'):
                 fingers[id].y = int(finger_point.y * height)
 
                 if id == cfg.FOREFINGER_ID or id == cfg.THUMB_ID:
-
+                
+                    # вычисление дистанции
                     cv2.circle(img, (fingers[id].x, fingers[id].y), cfg.CIRCLE_RADIUS, cfg.PINK_COLOR, cv2.FILLED)
                     distance = service.get_distance(fingers[cfg.FOREFINGER_ID], fingers[cfg.THUMB_ID])
                     logging.info(distance)
